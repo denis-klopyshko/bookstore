@@ -5,7 +5,6 @@ import com.bookstore.service.FileDataUploadService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -18,7 +17,6 @@ import java.util.Objects;
 
 @RestController
 @Slf4j
-@Validated
 @RequiredArgsConstructor
 public class DataUploadingController {
     private final FileDataUploadService service;

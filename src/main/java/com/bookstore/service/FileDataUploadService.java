@@ -19,8 +19,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -69,7 +67,6 @@ public class FileDataUploadService {
             savePublishers(publishers);
             saveBooks(books);
         } catch (Exception ex) {
-            log.error("Error", ex);
             log.error("There was an error processing books: {}", ex.getMessage());
             throw new CsvFileException("Error parsing csv file", ex);
         }
@@ -81,7 +78,6 @@ public class FileDataUploadService {
         CSVFormat format = this.getCsvFormat(USERS_CSV_HEADERS);
         try (final CSVParser records = CSVParser.parse(file.getInputStream(), StandardCharsets.UTF_8, format)) {
             Set<User> users = new HashSet<>();
-            var start = Instant.now();
 
             records.stream().sequential().forEach(line -> {
                 var userId = Long.valueOf(line.get(0));
@@ -102,8 +98,6 @@ public class FileDataUploadService {
             });
 
             saveUsers(users);
-            var end = Instant.now();
-            log.info("Finished to process users: {} seconds", Duration.between(start, end).toSeconds());
         } catch (Exception ex) {
             log.error("There was an error processing users: {}", ex.getMessage());
             throw new CsvFileException("Error parsing csv file", ex);
@@ -115,7 +109,6 @@ public class FileDataUploadService {
         CSVFormat format = this.getCsvFormat(RATINGS_CSV_HEADERS);
         try (final CSVParser records = CSVParser.parse(file.getInputStream(), StandardCharsets.UTF_8, format)) {
             Set<Rating> ratings = new HashSet<>();
-            var start = Instant.now();
 
             records.stream().sequential().forEach(record -> {
                 var userId = Long.valueOf(record.get(0));
@@ -134,8 +127,6 @@ public class FileDataUploadService {
             });
 
             saveRatings(ratings);
-            var end = Instant.now();
-            log.info("Finished to process ratings: {} seconds", Duration.between(start, end).toSeconds());
         } catch (Exception ex) {
             log.error("There was an error processing ratings: {}", ex.getMessage());
             throw new CsvFileException("Error parsing csv file", ex);
