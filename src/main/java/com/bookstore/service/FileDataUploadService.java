@@ -27,7 +27,6 @@ import static java.util.stream.Collectors.toMap;
 
 @Slf4j
 @Service
-@Validated
 @RequiredArgsConstructor
 public class FileDataUploadService {
     private static final int BATCH_SIZE = 1000;
@@ -39,7 +38,7 @@ public class FileDataUploadService {
     private static final String[] RATINGS_CSV_HEADERS = {"User-ID", "ISBN", "Book-Rating"};
 
     @Transactional
-    public void processBooksFile(@Valid MultipartFile file) {
+    public void processBooksFile(MultipartFile file) {
         CSVFormat format = this.getCsvFormat(BOOKS_CSV_HEADERS);
         try (final CSVParser records = CSVParser.parse(file.getInputStream(), StandardCharsets.UTF_8, format)) {
             Set<Publisher> publishers = new HashSet<>();
