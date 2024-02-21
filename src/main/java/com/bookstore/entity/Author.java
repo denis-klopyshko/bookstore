@@ -2,6 +2,7 @@ package com.bookstore.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.BatchSize;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -9,7 +10,7 @@ import java.util.Set;
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
-@EqualsAndHashCode(of = "name")
+@EqualsAndHashCode(of = {"id", "name"})
 @ToString(of = {"id", "name"})
 @Getter
 @Setter
@@ -17,8 +18,8 @@ import java.util.Set;
 @Table(name = "authors")
 public class Author {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "author_entity_seq")
-    @SequenceGenerator(name = "author_entity_seq", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "authorIdSequence")
+    @SequenceGenerator(name = "authorIdSequence", sequenceName = "authors_id_seq", allocationSize = 1)
     @Column(name = "id", nullable = false)
     private Long id;
 
@@ -26,7 +27,8 @@ public class Author {
     private String name;
 
     @Builder.Default
-    @OneToMany(mappedBy = "author")
+    @BatchSize(size = 50)
+    @OneToMany(mappedBy = "author", fetch = FetchType.LAZY)
     private Set<Book> books = new HashSet<>();
 
     public void addBook(Book book) {

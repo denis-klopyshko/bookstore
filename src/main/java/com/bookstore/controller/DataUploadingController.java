@@ -1,7 +1,7 @@
 package com.bookstore.controller;
 
 import com.bookstore.exception.FileFormatException;
-import com.bookstore.service.FileDataUploadService;
+import com.bookstore.service.impl.FileDataUploadService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +22,8 @@ public class DataUploadingController {
     private final FileDataUploadService service;
 
     @PostMapping(path = "/csv/upload/{type}")
-    public ResponseEntity<Object> loadData(@RequestParam("file") MultipartFile file, @PathVariable String type) {
+    public ResponseEntity<Object> loadData(@RequestParam(name = "file") MultipartFile file,
+                                           @PathVariable(name = "type") String type) {
 
         if (!Objects.equals(file.getContentType(), "text/csv")) {
             throw new FileFormatException("Not a csv file!");

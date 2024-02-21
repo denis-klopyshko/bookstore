@@ -15,10 +15,12 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
-    show-sql: false
+    show-sql: true
     open-in-view: false
     properties:
       hibernate:
+        jdbc:
+          use_get_generated_keys: true
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
   servlet:
@@ -26,3 +28,6 @@ spring:
       enabled: true
       max-file-size: 100MB
       max-request-size: 100MB
+server:
+  servlet:
+    contextPath: /api
