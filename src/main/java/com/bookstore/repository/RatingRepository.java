@@ -15,7 +15,7 @@ public interface RatingRepository extends JpaRepository<Rating, Long> {
 
     List<Rating> findAllByBookIsbnIn(List<String> isbns);
 
-    @Query(value = "SELECT r.id.bookIsbn, AVG(r.score) FROM Rating r WHERE r.id.bookIsbn IN :bookIsbns GROUP BY r.id.bookIsbn")
+    @Query(value = "SELECT r.id.bookIsbn, ROUND(AVG(r.score), 2) FROM Rating r WHERE r.id.bookIsbn IN :bookIsbns GROUP BY r.id.bookIsbn")
     List<Object[]> findAverageRatingByBookIsbnsIn(List<String> bookIsbns);
 
     Page<Rating> findAllByUserId(Long userId, Pageable pageable);

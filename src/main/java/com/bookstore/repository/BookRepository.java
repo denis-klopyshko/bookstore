@@ -18,7 +18,7 @@ import java.util.Optional;
 
 @Repository
 public interface BookRepository extends JpaRepository<Book, Long>, JpaSpecificationExecutor<Book> {
-    @Query("SELECT AVG(r.score) FROM Rating r WHERE r.book = :book")
+    @Query("SELECT ROUND(AVG(r.score), 2) FROM Rating r WHERE r.book = :book")
     Optional<Double> calculateAverageRating(@Param("book") Book book);
 
     Page<Book> findAll(Specification<Book> spec, Pageable pageable);

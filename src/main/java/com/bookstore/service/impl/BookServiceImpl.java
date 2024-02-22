@@ -22,8 +22,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -138,10 +136,7 @@ public class BookServiceImpl implements BookService {
 
     private BookDto mapToResponse(Book book) {
         var bookDto = MAPPER.mapToDto(book);
-        var avgRating = bookRepo.calculateAverageRating(book)
-                .map(score -> BigDecimal.valueOf(score).setScale(2, RoundingMode.HALF_UP))
-                .map(BigDecimal::doubleValue)
-                .orElse(0.0);
+        var avgRating = bookRepo.calculateAverageRating(book).orElse(0.0);
         bookDto.setRating(avgRating);
         return bookDto;
     }
