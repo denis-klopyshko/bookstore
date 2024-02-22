@@ -24,6 +24,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -39,8 +42,22 @@ public class BookServiceImpl implements BookService {
     @Transactional(readOnly = true)
     @Override
     public Page<BookDto> findAll(BookFilter bookFilter, Pageable pageable) {
-        return bookRepo.findAll(bookFilter.toSpec(), pageable)
-                .map(this::mapToResponse);
+        Page<BookDto> booksPage = bookRepo
+                .findAll(bookFilter.toSpec(), pageable)
+                .map(MAPPER::mapToDto);
+
+        List<String> bookIsbns = booksPage.map(BookDto::getIsbn).toList();
+        Map<String, Double> bookRatings = ratingRepo.findAverageRatingByBookIsbnsIn(bookIsbns)
+                .stream().collect(Collectors.toMap(
+                        arr -> (String) arr[0],   // Book ISBN
+                        arr -> (Double) arr[1]    // Average
+                ));
+
+        return booksPage.map(book -> {
+            var avgRating = bookRatings.getOrDefault(book.getIsbn(), 0.0);
+            book.setRating(avgRating);
+            return book;
+        });
     }
 
     @Transactional(readOnly = true)

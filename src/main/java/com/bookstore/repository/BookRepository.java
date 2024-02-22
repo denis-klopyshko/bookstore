@@ -14,7 +14,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -31,23 +30,23 @@ public interface BookRepository extends JpaRepository<Book, Long>, JpaSpecificat
     @UtilityClass
     class Specs {
         public static Specification<Book> byAuthorId(Long authorId) {
-            return ((root, query, cb) ->
-                    cb.equal(root.join(Book_.AUTHOR).get(Author_.ID), authorId));
+            return (root, query, cb) ->
+                    cb.equal(root.join(Book_.AUTHOR).get(Author_.ID), authorId);
         }
 
         public static Specification<Book> byPublisherId(Long publisherId) {
-            return ((root, query, cb) ->
-                    cb.equal(root.join(Book_.PUBLISHER).get(Publisher_.ID), publisherId));
+            return (root, query, cb) ->
+                    cb.equal(root.join(Book_.PUBLISHER).get(Publisher_.ID), publisherId);
         }
 
         public static Specification<Book> byTitleLike(String bookTitle) {
-            return ((root, query, cb) ->
-                    cb.like(root.get(Book_.TITLE), '%' + bookTitle + '%'));
+            return (root, query, cb) ->
+                    cb.like(root.get(Book_.TITLE), '%' + bookTitle + '%');
         }
 
         public static Specification<Book> byYear(Integer year) {
-            return ((root, query, cb) ->
-                    cb.equal(root.get(Book_.YEAR), year));
+            return (root, query, cb) ->
+                    cb.equal(root.get(Book_.YEAR), year);
         }
     }
 }
