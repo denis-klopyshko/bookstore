@@ -9,8 +9,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import java.net.URI;
 
 @RestController
 @RequiredArgsConstructor
@@ -27,15 +33,21 @@ public class PublisherController {
     }
 
     @PostMapping
-    public PublisherDto createPublisher(@Valid @RequestBody PublisherRequestDto publisherRequest) {
-        return publisherService.create(publisherRequest);
+    public ResponseEntity<PublisherDto> createPublisher(@Valid @RequestBody PublisherRequestDto publisherRequest) {
+        PublisherDto savedPublisher = publisherService.create(publisherRequest);
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(savedPublisher.getId()).toUri();
+
+        return ResponseEntity.created(location).body(savedPublisher);
     }
 
     @PutMapping("/{id}")
     public PublisherDto updatePublisher(@PathVariable(name = "id") Long id,
                                         @Valid @RequestBody PublisherUpdateRequestDto updateRequest) {
         if (!id.equals(updateRequest.getId())) {
-            throw new RuntimeException("Id in path should be equal to id in request body!");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Id in path should be equal to id in request body!");
         }
 
         return publisherService.update(id, updateRequest);

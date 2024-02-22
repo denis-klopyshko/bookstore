@@ -10,8 +10,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import java.net.URI;
 
 @RestController
 @RequiredArgsConstructor
@@ -36,15 +41,22 @@ public class BookController {
     }
 
     @PostMapping
-    public BookDto createBook(@Valid @RequestBody BookRequestDto bookRequest) {
-        return bookService.create(bookRequest);
+    public ResponseEntity<BookDto> createBook(@Valid @RequestBody BookRequestDto bookRequest) {
+        BookDto savedBook = bookService.create(bookRequest);
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .path("/{isbn}")
+                .buildAndExpand(savedBook.getIsbn()).toUri();
+
+        return ResponseEntity.created(location).body(savedBook);
     }
 
     @PutMapping("/{isbn}")
     public BookDto updateBook(@PathVariable(name = "isbn") String isbn, @Valid @RequestBody BookRequestDto bookRequest) {
         if (!isbn.equals(bookRequest.getIsbn())) {
-            throw new RuntimeException("ISBN in path should be equal to ISBN in request body!");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "ISBN in path should be equal to ISBN in request body!");
         }
+
         return bookService.update(isbn, bookRequest);
     }
 
