@@ -15,6 +15,7 @@ public interface UserMapper {
     @Mapping(target = "city", source = "user.address.city")
     @Mapping(target = "country", source = "user.address.country")
     @Mapping(target = "region", source = "user.address.region")
+    @Mapping(target = "id", source = "id")
     UserDto mapToDto(User user);
 
     User mapToEntity(UserRequestDto userRequestDto);

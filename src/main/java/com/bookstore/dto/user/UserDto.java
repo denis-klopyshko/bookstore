@@ -17,4 +17,8 @@ public class UserDto {
     private String region;
     private String country;
     private Integer age;
+
+    public static UserDto ofAge(Integer age) {
+        return UserDto.builder().age(age).build();
+    }
 }

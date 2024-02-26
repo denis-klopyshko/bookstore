@@ -39,4 +39,8 @@ public class Author {
     public static Author ofName(String name) {
         return Author.builder().name(name).build();
     }
+
+    public static Author ofNameAndId(Long id, String name) {
+        return Author.builder().id(id).name(name).build();
+    }
 }

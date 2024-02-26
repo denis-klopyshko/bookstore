@@ -3,7 +3,7 @@ package com.bookstore.controller;
 import com.bookstore.dto.author.AuthorDto;
 import com.bookstore.dto.author.AuthorRequestDto;
 import com.bookstore.dto.author.AuthorUpdateRequestDto;
-import com.bookstore.service.impl.AuthorServiceImpl;
+import com.bookstore.service.AuthorService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +25,7 @@ import java.net.URI;
 @RequestMapping("/v1/authors")
 public class AuthorController {
 
-    private final AuthorServiceImpl authorService;
+    private final AuthorService authorService;
 
     @GetMapping
     public Page<AuthorDto> findAllAuthors(Pageable pageable) {

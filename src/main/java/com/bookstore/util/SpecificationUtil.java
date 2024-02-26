@@ -1,4 +1,4 @@
-package com.bookstore;
+package com.bookstore.util;
 
 import lombok.experimental.UtilityClass;
 import org.springframework.data.jpa.domain.Specification;

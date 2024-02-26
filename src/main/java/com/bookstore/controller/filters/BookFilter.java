@@ -7,7 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
 
-import static com.bookstore.SpecificationUtil.applyIfPresent;
+import static com.bookstore.util.SpecificationUtil.applyIfPresent;
 import static org.springframework.data.jpa.domain.Specification.where;
 
 @Data

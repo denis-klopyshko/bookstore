@@ -1,5 +1,6 @@
 package com.bookstore.dto.publisher;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -16,4 +17,9 @@ public class PublisherUpdateRequestDto extends PublisherRequestDto {
 
     @NotNull
     private Long id;
+
+    public PublisherUpdateRequestDto(Long id, @NotBlank String name) {
+        super(name);
+        this.id = id;
+    }
 }

@@ -41,10 +41,7 @@ public class AuthorServiceImpl implements AuthorService {
     @Override
     public AuthorDto create(AuthorRequestDto authorRequestDto) {
         var authorEntity = MAPPER.mapToEntity(authorRequestDto);
-        var newName = authorRequestDto.getName();
-        if (!authorEntity.getName().equals(newName)) {
-            validateAuthorExist(authorRequestDto.getName());
-        }
+        validateAuthorExist(authorRequestDto.getName());
         var savedAuthor = authorRepo.save(authorEntity);
         return MAPPER.mapToDto(savedAuthor);
     }
@@ -53,6 +50,9 @@ public class AuthorServiceImpl implements AuthorService {
     public AuthorDto update(Long authorId, AuthorUpdateRequestDto authorUpdateRequest) {
         validateAuthorExist(authorUpdateRequest.getName());
         var authorEntity = findAuthorEntity(authorId);
+        if (!authorEntity.getName().equals(authorUpdateRequest.getName())) {
+            validateAuthorExist(authorUpdateRequest.getName());
+        }
         authorEntity.setName(authorUpdateRequest.getName());
         return MAPPER.mapToDto(authorRepo.save(authorEntity));
 
