@@ -1,12 +1,10 @@
-package com.bookstore.service;
+package com.bookstore.service.impl;
 
 import com.bookstore.entity.*;
 import com.bookstore.exception.CsvFileException;
 import com.google.common.base.CharMatcher;
 import com.google.common.collect.Iterables;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -15,7 +13,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.charset.StandardCharsets;
@@ -23,6 +20,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.google.common.collect.Iterables.get;
 import static java.util.stream.Collectors.toMap;
 
 @Slf4j
@@ -71,7 +69,6 @@ public class FileDataUploadService {
         }
     }
 
-    @SneakyThrows
     @Transactional
     public void processUsersFile(MultipartFile file) {
         CSVFormat format = this.getCsvFormat(USERS_CSV_HEADERS);
@@ -79,18 +76,21 @@ public class FileDataUploadService {
             Set<User> users = new HashSet<>();
 
             records.stream().sequential().forEach(line -> {
-                var userId = Long.valueOf(line.get(0));
+                var userExternalId = Long.valueOf(line.get(0));
                 var userAge = Optional.ofNullable(line.get(2))
                         .filter(v -> !v.equals("NULL"))
                         .map(Integer::valueOf)
                         .orElse(null);
-                var user = User.builder().age(userAge).id(userId).build();
+                var user = User.builder().age(userAge).externalId(userExternalId).build();
 
-                var addressSplitted = Arrays.stream(line.get(1).split(",", -1)).toList();
+                var addressSplitted = Arrays.stream(line.get(1).split(",", -1))
+                        .map(this::sanitizeString)
+                        .filter(str -> str.length() > 0)
+                        .toList();
                 var address = Address.builder()
-                        .city(Iterables.get(addressSplitted, 0, null))
-                        .region(Iterables.get(addressSplitted, 1, null))
-                        .country(Iterables.get(addressSplitted, 2, null))
+                        .city(get(addressSplitted, 0, null))
+                        .region(get(addressSplitted, 1, null))
+                        .country(get(addressSplitted, 2, null))
                         .build();
                 user.setAddress(address);
                 users.add(user);
@@ -110,18 +110,17 @@ public class FileDataUploadService {
             Set<Rating> ratings = new HashSet<>();
 
             records.stream().sequential().forEach(record -> {
-                var userId = Long.valueOf(record.get(0));
-                var user = User.builder().id(userId).build();
-
+                var userExternalId = Long.valueOf(record.get(0));
                 var bookIsbn = sanitizeString(record.get(1));
-                var book = Book.builder().isbn(bookIsbn).build();
+                var ratingScore = Integer.valueOf(record.get(2));
 
-                var rating = Rating.builder()
-                        .user(user)
-                        .book(book)
-                        .rating(Integer.valueOf(record.get(2)))
-                        .build();
+                // User Rating can't be 0. Not valid data. Skipping...
+                if (ratingScore.equals(0)) {
+                    return;
+                }
 
+                var ratingPk = new Rating.BookRatingPrimaryKey(userExternalId, bookIsbn);
+                var rating = Rating.builder().id(ratingPk).score(ratingScore).build();
                 ratings.add(rating);
             });
 
@@ -139,42 +138,43 @@ public class FileDataUploadService {
 
     private void saveRatingsChunk(List<Rating> chunk) {
         var bookIsbns = chunk.stream()
-                .map(Rating::getBook)
-                .map(book -> StringUtils.quote(book.getIsbn()))
+                .map(Rating::getId)
+                .map(Rating.BookRatingPrimaryKey::getBookIsbn)
+                .map(StringUtils::quote)
                 .collect(Collectors.joining(","));
 
-        var userIds = chunk.stream()
-                .map(Rating::getUser)
-                .map(User::getId)
+        var userExternalIds = chunk.stream()
+                .map(Rating::getId)
+                .map(Rating.BookRatingPrimaryKey::getUserId)
                 .map(String::valueOf)
                 .collect(Collectors.joining(","));
 
         var booksSql = String.format("SELECT b.* FROM books b WHERE b.isbn IN (%s)", bookIsbns);
-        Map<String, Book> bookMap = jdbcTemplate.query(booksSql, new BeanPropertyRowMapper<>(Book.class))
+        Map<String, Book> bookMap = jdbcTemplate.query(booksSql, BeanPropertyRowMapper.newInstance(Book.class))
                 .stream()
                 .collect(toMap(Book::getIsbn, Function.identity()));
 
-        var usersSql = String.format("SELECT u.* FROM users u WHERE u.id IN (%s)", userIds);
-        Map<Long, User> usersMap = jdbcTemplate.query(usersSql, new BeanPropertyRowMapper<>(User.class))
+        var usersSql = String.format("SELECT u.* FROM users u WHERE u.external_id IN (%s)", userExternalIds);
+        Map<Long, User> usersMap = jdbcTemplate.query(usersSql, BeanPropertyRowMapper.newInstance(User.class))
                 .stream()
-                .collect(toMap(User::getId, Function.identity()));
+                .collect(toMap(User::getExternalId, Function.identity()));
 
         var newRatingsChunk = chunk.stream()
                 .map(rating -> createNewRating(rating, bookMap, usersMap))
                 .filter(Objects::nonNull)
                 .toList();
 
-        var insertRatingSql = "INSERT INTO ratings(user_id, book_isbn, rating) VALUES (?, ?, ?)";
+        var insertRatingSql = "INSERT INTO ratings(user_id, book_isbn, score) VALUES (?, ?, ?)";
         jdbcTemplate.batchUpdate(insertRatingSql, newRatingsChunk, newRatingsChunk.size(), (ps, rating) -> {
             ps.setLong(1, rating.getUser().getId());
             ps.setString(2, rating.getBook().getIsbn());
-            ps.setInt(3, rating.getRating());
+            ps.setDouble(3, rating.getScore());
         });
     }
 
     private Rating createNewRating(Rating rating, Map<String, Book> booksMap, Map<Long, User> usersMap) {
-        var book = booksMap.get(rating.getBook().getIsbn());
-        var user = usersMap.get(rating.getUser().getId());
+        var book = booksMap.get(rating.getId().getBookIsbn());
+        var user = usersMap.get(rating.getId().getUserId());
 
         if (book == null || user == null) {
             return null;
@@ -183,7 +183,7 @@ public class FileDataUploadService {
         return Rating.builder()
                 .user(user)
                 .book(book)
-                .rating(rating.getRating())
+                .score(rating.getScore())
                 .build();
     }
 
@@ -193,15 +193,19 @@ public class FileDataUploadService {
     }
 
     private void saveUsersChunk(List<User> usersChunk) {
-        var insertUserSql = "INSERT INTO users(id, age) VALUES (?, ?)";
-        var insertAddressSql = "INSERT INTO address(user_id, city, region, country) VALUES (?, ?, ?, ?)";
+        var insertUserSql = "INSERT INTO users(id, external_id, age) VALUES (nextval('users_id_seq'), ?, ?)";
         jdbcTemplate.batchUpdate(insertUserSql, usersChunk, usersChunk.size(), (ps, user) -> {
-            ps.setLong(1, user.getId());
+            ps.setLong(1, user.getExternalId());
             ps.setObject(2, user.getAge());
         });
 
+        var userIdSubQuery = "SELECT u.id from users u where u.external_id = ?";
+        var insertAddressSql = String.format(
+                "INSERT INTO address(user_id, city, region, country) VALUES ((%s), ?, ?, ?)",
+                userIdSubQuery
+        );
         jdbcTemplate.batchUpdate(insertAddressSql, usersChunk, usersChunk.size(), (ps, user) -> {
-            ps.setLong(1, user.getId());
+            ps.setLong(1, user.getExternalId());
             ps.setString(2, user.getAddress().getCity());
             ps.setString(3, user.getAddress().getRegion());
             ps.setString(4, user.getAddress().getCountry());
@@ -214,7 +218,7 @@ public class FileDataUploadService {
     }
 
     private void saveAuthorsChunk(List<Author> authorsChunk) {
-        var insertAuthorSql = "INSERT INTO authors(id, name) VALUES (nextval('author_entity_seq'), ?)";
+        var insertAuthorSql = "INSERT INTO authors(id, name) VALUES (nextval('authors_id_seq'), ?)";
         jdbcTemplate.batchUpdate(
                 insertAuthorSql,
                 authorsChunk,
@@ -228,7 +232,7 @@ public class FileDataUploadService {
     }
 
     private void savePublishersChunk(List<Publisher> publishersChunk) {
-        var insertPublisherSql = "INSERT INTO publishers(id, name) VALUES (nextval('publisher_entity_seq'), ?)";
+        var insertPublisherSql = "INSERT INTO publishers(id, name) VALUES (nextval('publishers_id_seq'), ?)";
         jdbcTemplate.batchUpdate(
                 insertPublisherSql,
                 publishersChunk,
@@ -246,7 +250,7 @@ public class FileDataUploadService {
         var publisherSubQuery = "SELECT p.id FROM publishers p WHERE p.name = ?";
         var insertBookSql = String.format(
                 "INSERT INTO books(id, isbn, title, publisher_id, author_id, year)" +
-                        " VALUES (nextval('book_entity_seq'), ?, ?, (%s), (%s), ?)",
+                        " VALUES (nextval('books_id_seq'), ?, ?, (%s), (%s), ?)",
                 publisherSubQuery, authorSubQuery
         );
         jdbcTemplate.batchUpdate(insertBookSql, booksChunk, booksChunk.size(),
@@ -262,7 +266,8 @@ public class FileDataUploadService {
     private String sanitizeString(String strToSanitize) {
         return CharMatcher
                 .is('\'')
-                .trimFrom(strToSanitize);
+                .trimFrom(strToSanitize)
+                .trim();
     }
 
     private CSVFormat getCsvFormat(String[] headers) {

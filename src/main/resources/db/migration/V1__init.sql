@@ -4,23 +4,16 @@ DROP TABLE IF EXISTS publishers CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS ratings CASCADE;
 DROP TABLE IF EXISTS address CASCADE;
-DROP SEQUENCE IF EXISTS publisher_entity_seq;
-DROP SEQUENCE IF EXISTS author_entity_seq;
-DROP SEQUENCE IF EXISTS book_entity_seq;
-
-CREATE SEQUENCE publisher_entity_seq START 1 INCREMENT 1;
-CREATE SEQUENCE author_entity_seq START 1 INCREMENT 1;
-CREATE SEQUENCE book_entity_seq START 1 INCREMENT 1;
 
 CREATE TABLE publishers
 (
-    id   BIGINT PRIMARY KEY,
+    id   BIGSERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL UNIQUE
 );
 
 CREATE TABLE authors
 (
-    id   BIGINT PRIMARY KEY,
+    id   BIGSERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL UNIQUE
 );
 
@@ -36,23 +29,24 @@ CREATE TABLE books
 
 CREATE TABLE users
 (
-    id  BIGSERIAL PRIMARY KEY,
-    age INT
+    id          BIGSERIAL PRIMARY KEY,
+    external_id BIGINT UNIQUE,
+    age         INT
 );
 
 CREATE TABLE address
 (
     user_id BIGSERIAL PRIMARY KEY,
-    city    VARCHAR(255) NOT NULL,
+    city    VARCHAR(255),
     region  VARCHAR(255),
     country VARCHAR(255)
 );
 
 CREATE TABLE ratings
 (
-    id        BIGSERIAL PRIMARY KEY,
-    user_id   BIGINT NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    user_id   BIGINT REFERENCES users (id) ON DELETE CASCADE,
     book_isbn VARCHAR(50) REFERENCES books (isbn) ON DELETE CASCADE,
-    rating    INT    NOT NULL,
-    CHECK ( rating BETWEEN 0 AND 10)
+    score     INT NOT NULL,
+    CHECK ( score BETWEEN 0 AND 10),
+    PRIMARY KEY (user_id, book_isbn)
 );

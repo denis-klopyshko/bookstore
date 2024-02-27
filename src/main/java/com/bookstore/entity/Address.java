@@ -5,20 +5,19 @@ import lombok.*;
 
 @AllArgsConstructor
 @NoArgsConstructor
-@EqualsAndHashCode
+@EqualsAndHashCode(exclude = "user")
 @Getter
 @Builder
-@ToString
+@ToString(exclude = "user")
 @Setter
 @Entity
 @Table(name = "address")
 public class Address {
-
     @Id
     @Column(name = "user_id")
     private Long id;
 
-    @OneToOne
+    @OneToOne(optional = false)
     @MapsId
     @JoinColumn(name = "user_id")
     private User user;

@@ -2,6 +2,7 @@ package com.bookstore.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.NaturalId;
 
 import java.util.HashSet;
@@ -10,7 +11,7 @@ import java.util.Set;
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
-@EqualsAndHashCode
+@EqualsAndHashCode(of = {"isbn"})
 @Getter
 @Setter
 @Builder
@@ -18,9 +19,9 @@ import java.util.Set;
 @Table(name = "books")
 public class Book {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "book_entity_seq")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "bookIdSequence")
     @Column(name = "id", insertable = false, updatable = false)
-    @SequenceGenerator(name = "book_entity_seq", allocationSize = 1)
+    @SequenceGenerator(name = "bookIdSequence", sequenceName = "books_id_seq", allocationSize = 1)
     private Long id;
 
     @NaturalId
@@ -34,7 +35,6 @@ public class Book {
     @JoinColumn(name = "publisher_id")
     private Publisher publisher;
 
-
     @ManyToOne
     @JoinColumn(name = "author_id")
     private Author author;
@@ -44,8 +44,19 @@ public class Book {
 
     @Builder.Default
     @ToString.Exclude
-    @OneToMany(mappedBy = "book")
+    @BatchSize(size = 50)
+    @OneToMany(mappedBy = "book", cascade = CascadeType.REMOVE)
     private Set<Rating> ratings = new HashSet<>();
+
+    public void setAuthor(Author author) {
+        this.author = author;
+        author.getBooks().add(this);
+    }
+
+    public void setPublisher(Publisher publisher) {
+        this.publisher = publisher;
+        publisher.getBooks().add(this);
+    }
 
     public Book(String isbn, String title, Publisher publisher, Integer year) {
         this.isbn = isbn;

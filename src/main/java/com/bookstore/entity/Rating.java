@@ -3,29 +3,49 @@ package com.bookstore.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.io.Serializable;
+import java.util.Objects;
+
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
-@EqualsAndHashCode
+@EqualsAndHashCode(of = "id")
+@ToString(of = {"id", "score"})
 @Getter
 @Builder
-
 @Setter
 @Table(name = "ratings")
 public class Rating {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @EmbeddedId
+    private BookRatingPrimaryKey id;
 
     @ManyToOne
-    @ToString.Exclude
+    @MapsId("userId")
     @JoinColumn(name = "user_id")
     private User user;
 
     @ManyToOne
-    @ToString.Exclude
+    @MapsId("bookIsbn")
     @JoinColumn(name = "book_isbn", referencedColumnName = "isbn")
     private Book book;
 
-    private Integer rating;
+    private Integer score;
+
+    @Data
+    @ToString
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Embeddable
+    public static class BookRatingPrimaryKey implements Serializable {
+        @Column(name = "user_id")
+        private Long userId;
+
+        @Column(name = "book_isbn")
+        private String bookIsbn;
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(userId, bookIsbn);
+        }
+    }
 }
