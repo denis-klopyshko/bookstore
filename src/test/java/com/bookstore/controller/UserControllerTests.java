@@ -17,6 +17,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
@@ -26,10 +27,12 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@WithMockUser
 @WebMvcTest(UserController.class)
 public class UserControllerTests {
 
@@ -87,6 +90,7 @@ public class UserControllerTests {
 
         mvc.perform(post("/v1/users")
                         .contentType(MediaType.APPLICATION_JSON)
+                        .with(jwt())
                         .content(om.writeValueAsString(requestBody)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(userDto.getId()))
@@ -104,6 +108,7 @@ public class UserControllerTests {
 
         mvc.perform(post("/v1/users")
                         .contentType(MediaType.APPLICATION_JSON)
+                        .with(jwt())
                         .content(om.writeValueAsString(requestBody)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.error").value("User with name [John Doe] already exists."));
@@ -117,6 +122,7 @@ public class UserControllerTests {
 
         mvc.perform(put("/v1/users/1")
                         .contentType(MediaType.APPLICATION_JSON)
+                        .with(jwt())
                         .content(om.writeValueAsString(requestBody)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("Id in path should be equal to id in request body!"));
@@ -133,6 +139,7 @@ public class UserControllerTests {
 
         mvc.perform(put("/v1/users/2")
                         .contentType(MediaType.APPLICATION_JSON)
+                        .with(jwt())
                         .content(om.writeValueAsString(requestBody)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.country").value("Ukraine"));
@@ -150,6 +157,7 @@ public class UserControllerTests {
 
         mvc.perform(put("/v1/users/2")
                         .contentType(MediaType.APPLICATION_JSON)
+                        .with(jwt())
                         .content(om.writeValueAsString(requestBody)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.error").value(errorMessage));
@@ -162,7 +170,7 @@ public class UserControllerTests {
         var errorMessage = "User not found by id: [2]";
         doThrow(new ResourceNotFoundException(errorMessage)).when(service).delete(any(Long.class));
 
-        mvc.perform(delete("/v1/users/2"))
+        mvc.perform(delete("/v1/users/2").with(jwt()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error").value(errorMessage));
 
@@ -174,7 +182,7 @@ public class UserControllerTests {
         var errorMessage = "Can't delete User: [2]. Books not empty!";
         doThrow(new ConflictException(errorMessage)).when(service).delete(any(Long.class));
 
-        mvc.perform(delete("/v1/users/2"))
+        mvc.perform(delete("/v1/users/2").with(jwt()))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.error").value(errorMessage));
 

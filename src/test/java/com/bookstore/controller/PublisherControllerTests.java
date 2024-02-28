@@ -15,6 +15,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
@@ -25,11 +26,13 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.times;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@WithMockUser
 @WebMvcTest(PublisherController.class)
 public class PublisherControllerTests {
 
@@ -82,6 +85,7 @@ public class PublisherControllerTests {
 
         mvc.perform(post("/v1/publishers")
                         .contentType(MediaType.APPLICATION_JSON)
+                        .with(jwt())
                         .content(om.writeValueAsString(requestBody)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1))
@@ -99,6 +103,7 @@ public class PublisherControllerTests {
 
         mvc.perform(post("/v1/publishers")
                         .contentType(MediaType.APPLICATION_JSON)
+                        .with(jwt())
                         .content(om.writeValueAsString(requestBody)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.error").value("Publisher with name [John Doe] already exists."));
@@ -112,6 +117,7 @@ public class PublisherControllerTests {
 
         mvc.perform(put("/v1/publishers/1")
                         .contentType(MediaType.APPLICATION_JSON)
+                        .with(jwt())
                         .content(om.writeValueAsString(requestBody)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("Id in path should be equal to id in request body!"));
@@ -128,6 +134,7 @@ public class PublisherControllerTests {
 
         mvc.perform(put("/v1/publishers/2")
                         .contentType(MediaType.APPLICATION_JSON)
+                        .with(jwt())
                         .content(om.writeValueAsString(requestBody)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("John Doe Updated"));
@@ -145,6 +152,7 @@ public class PublisherControllerTests {
 
         mvc.perform(put("/v1/publishers/2")
                         .contentType(MediaType.APPLICATION_JSON)
+                        .with(jwt())
                         .content(om.writeValueAsString(requestBody)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.error").value(errorMessage));
@@ -157,7 +165,7 @@ public class PublisherControllerTests {
         var errorMessage = "Publisher not found by id: [2]";
         doThrow(new ResourceNotFoundException(errorMessage)).when(service).delete(any(Long.class));
 
-        mvc.perform(delete("/v1/publishers/2"))
+        mvc.perform(delete("/v1/publishers/2").with(jwt()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error").value(errorMessage));
 
@@ -169,7 +177,7 @@ public class PublisherControllerTests {
         var errorMessage = "Can't delete Publisher: [2]. Books not empty!";
         doThrow(new ConflictException(errorMessage)).when(service).delete(any(Long.class));
 
-        mvc.perform(delete("/v1/publishers/2"))
+        mvc.perform(delete("/v1/publishers/2").with(jwt()))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.error").value(errorMessage));
 

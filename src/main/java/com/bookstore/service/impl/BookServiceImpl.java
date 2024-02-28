@@ -1,8 +1,10 @@
 package com.bookstore.service.impl;
 
 import com.bookstore.controller.filters.BookFilter;
+import com.bookstore.dto.author.AuthorDto;
 import com.bookstore.dto.book.BookDto;
 import com.bookstore.dto.book.BookRequestDto;
+import com.bookstore.dto.publisher.PublisherDto;
 import com.bookstore.dto.rating.BookRatingDto;
 import com.bookstore.entity.Author;
 import com.bookstore.entity.Book;

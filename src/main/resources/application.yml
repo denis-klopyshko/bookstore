@@ -28,6 +28,12 @@ spring:
       enabled: true
       max-file-size: 100MB
       max-request-size: 100MB
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          audiences: ${JWT_AUDIENCES:https://dev-kugzqddea6xf2itb.us.auth0.com/api/v2/}
+          issuer-uri: ${JWT_ISSUER_URI:https://dev-kugzqddea6xf2itb.us.auth0.com/}
 server:
   servlet:
     contextPath: /api

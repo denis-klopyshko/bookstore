@@ -18,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
@@ -27,10 +28,12 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@WithMockUser
 @WebMvcTest(BookController.class)
 public class BookControllerTests {
 
@@ -112,6 +115,7 @@ public class BookControllerTests {
 
         mvc.perform(post("/v1/books")
                         .contentType(MediaType.APPLICATION_JSON)
+                        .with(jwt())
                         .content(om.writeValueAsString(requestBody)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.isbn").value(bookDto.getIsbn()))
@@ -129,6 +133,7 @@ public class BookControllerTests {
 
         mvc.perform(post("/v1/books")
                         .contentType(MediaType.APPLICATION_JSON)
+                        .with(jwt())
                         .content(om.writeValueAsString(requestBody)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.error").value(errorMessage));
@@ -142,6 +147,7 @@ public class BookControllerTests {
 
         mvc.perform(put("/v1/books/X6218-211762HS")
                         .contentType(MediaType.APPLICATION_JSON)
+                        .with(jwt())
                         .content(om.writeValueAsString(requestBody)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("ISBN in path should be equal to ISBN in request body!"));
@@ -162,6 +168,7 @@ public class BookControllerTests {
 
         mvc.perform(put("/v1/books/{isbn}", requestBody.getIsbn())
                         .contentType(MediaType.APPLICATION_JSON)
+                        .with(jwt())
                         .content(om.writeValueAsString(requestBody)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value(bookDto.getTitle()));
@@ -179,6 +186,7 @@ public class BookControllerTests {
 
         mvc.perform(put("/v1/books/{isbn}", requestBody.getIsbn())
                         .contentType(MediaType.APPLICATION_JSON)
+                        .with(jwt())
                         .content(om.writeValueAsString(requestBody)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.error").value(errorMessage));
@@ -191,7 +199,7 @@ public class BookControllerTests {
         var errorMessage = "Book not found by isbn: [X7236HS93]";
         doThrow(new ResourceNotFoundException(errorMessage)).when(service).delete(any(String.class));
 
-        mvc.perform(delete("/v1/books/X7236HS93"))
+        mvc.perform(delete("/v1/books/X7236HS93").with(jwt()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error").value(errorMessage));
 
