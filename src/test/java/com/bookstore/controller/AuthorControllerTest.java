@@ -15,6 +15,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
@@ -24,10 +25,12 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@WithMockUser
 @WebMvcTest(AuthorController.class)
 public class AuthorControllerTest {
 
@@ -47,7 +50,8 @@ public class AuthorControllerTest {
 
         given(service.findAll(any(PageRequest.class))).willReturn(allAuthors);
 
-        mvc.perform(get("/v1/authors").contentType(MediaType.APPLICATION_JSON))
+        mvc.perform(get("/v1/authors")
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("content", hasSize(1)))
                 .andExpect(jsonPath("content[0].name", is(author.getName())));
@@ -80,6 +84,7 @@ public class AuthorControllerTest {
 
         mvc.perform(post("/v1/authors")
                         .contentType(MediaType.APPLICATION_JSON)
+                        .with(jwt())
                         .content(om.writeValueAsString(requestBody)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1))
@@ -97,6 +102,7 @@ public class AuthorControllerTest {
 
         mvc.perform(post("/v1/authors")
                         .contentType(MediaType.APPLICATION_JSON)
+                        .with(jwt())
                         .content(om.writeValueAsString(requestBody)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.error").value("Author with name [John Doe] already exists."));
@@ -110,6 +116,7 @@ public class AuthorControllerTest {
 
         mvc.perform(put("/v1/authors/1")
                         .contentType(MediaType.APPLICATION_JSON)
+                        .with(jwt())
                         .content(om.writeValueAsString(requestBody)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("Id in path should be equal to id in request body!"));
@@ -126,6 +133,7 @@ public class AuthorControllerTest {
 
         mvc.perform(put("/v1/authors/{id}", requestBody.getId())
                         .contentType(MediaType.APPLICATION_JSON)
+                        .with(jwt())
                         .content(om.writeValueAsString(requestBody)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("John Doe Updated"));
@@ -143,6 +151,7 @@ public class AuthorControllerTest {
 
         mvc.perform(put("/v1/authors/2")
                         .contentType(MediaType.APPLICATION_JSON)
+                        .with(jwt())
                         .content(om.writeValueAsString(requestBody)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.error").value(errorMessage));
@@ -155,7 +164,7 @@ public class AuthorControllerTest {
         var errorMessage = "Author not found by id: [2]";
         doThrow(new ResourceNotFoundException(errorMessage)).when(service).delete(any(Long.class));
 
-        mvc.perform(delete("/v1/authors/2"))
+        mvc.perform(delete("/v1/authors/2").with(jwt()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error").value(errorMessage));
 
@@ -167,7 +176,7 @@ public class AuthorControllerTest {
         var errorMessage = "Can't delete author: [2]. Books not empty!";
         doThrow(new ConflictException(errorMessage)).when(service).delete(any(Long.class));
 
-        mvc.perform(delete("/v1/authors/2"))
+        mvc.perform(delete("/v1/authors/2").with(jwt()))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.error").value(errorMessage));
 

@@ -23,7 +23,8 @@ public interface BookRepository extends JpaRepository<Book, Long>, JpaSpecificat
 
     Page<Book> findAll(Specification<Book> spec, Pageable pageable);
 
-    Optional<Book> findByIsbn(String isbn);
+    @Query("SELECT b from Book b join fetch b.author join fetch b.publisher where b.isbn = :isbn")
+    Optional<Book> findByIsbn(@Param("isbn") String isbn);
 
     boolean existsByIsbn(String title);
 
