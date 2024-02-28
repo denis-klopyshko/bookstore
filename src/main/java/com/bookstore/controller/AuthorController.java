@@ -4,9 +4,12 @@ import com.bookstore.dto.author.AuthorDto;
 import com.bookstore.dto.author.AuthorRequestDto;
 import com.bookstore.dto.author.AuthorUpdateRequestDto;
 import com.bookstore.service.AuthorService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -28,10 +31,11 @@ public class AuthorController {
     private final AuthorService authorService;
 
     @GetMapping
-    public Page<AuthorDto> findAllAuthors(Pageable pageable) {
+    public Page<AuthorDto> findAllAuthors(@ParameterObject Pageable pageable) {
         return authorService.findAll(pageable);
     }
 
+    @Operation(security = @SecurityRequirement(name = "bearerAuth"))
     @PostMapping
     public ResponseEntity<AuthorDto> createAuthor(@Valid @RequestBody AuthorRequestDto authorRequest) {
         AuthorDto savedAuthor = authorService.create(authorRequest);
@@ -42,6 +46,7 @@ public class AuthorController {
         return ResponseEntity.created(location).body(savedAuthor);
     }
 
+    @Operation(security = @SecurityRequirement(name = "bearerAuth"))
     @PutMapping("/{id}")
     public AuthorDto updateAuthor(@PathVariable(name = "id") Long id,
                                   @Valid @RequestBody AuthorUpdateRequestDto updateRequest) {
@@ -57,6 +62,8 @@ public class AuthorController {
         return authorService.findById(id);
     }
 
+
+    @Operation(security = @SecurityRequirement(name = "bearerAuth"))
     @DeleteMapping("/{id}")
     public void deleteAuthor(@PathVariable(name = "id") Long id) {
         authorService.delete(id);

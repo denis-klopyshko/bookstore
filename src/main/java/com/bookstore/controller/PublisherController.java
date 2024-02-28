@@ -4,9 +4,12 @@ import com.bookstore.dto.publisher.PublisherDto;
 import com.bookstore.dto.publisher.PublisherRequestDto;
 import com.bookstore.dto.publisher.PublisherUpdateRequestDto;
 import com.bookstore.service.PublisherService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -28,10 +31,11 @@ public class PublisherController {
     private final PublisherService publisherService;
 
     @GetMapping
-    public Page<PublisherDto> findAllPublishers(Pageable pageable) {
+    public Page<PublisherDto> findAllPublishers(@ParameterObject Pageable pageable) {
         return publisherService.findAll(pageable);
     }
 
+    @Operation(security = @SecurityRequirement(name = "bearerAuth"))
     @PostMapping
     public ResponseEntity<PublisherDto> createPublisher(@Valid @RequestBody PublisherRequestDto publisherRequest) {
         PublisherDto savedPublisher = publisherService.create(publisherRequest);
@@ -43,6 +47,7 @@ public class PublisherController {
         return ResponseEntity.created(location).body(savedPublisher);
     }
 
+    @Operation(security = @SecurityRequirement(name = "bearerAuth"))
     @PutMapping("/{id}")
     public PublisherDto updatePublisher(@PathVariable(name = "id") Long id,
                                         @Valid @RequestBody PublisherUpdateRequestDto updateRequest) {
@@ -58,6 +63,7 @@ public class PublisherController {
         return publisherService.findById(id);
     }
 
+    @Operation(security = @SecurityRequirement(name = "bearerAuth"))
     @DeleteMapping("/{id}")
     public void deletePublisher(@PathVariable(name = "id") Long id) {
         publisherService.delete(id);
