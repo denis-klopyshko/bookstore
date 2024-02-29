@@ -17,7 +17,6 @@ public class SecurityConfig {
         http.authorizeHttpRequests(httpCustomizer -> httpCustomizer
                         .requestMatchers(HttpMethod.GET).permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/oauth/token").permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin(AbstractHttpConfigurer::disable)

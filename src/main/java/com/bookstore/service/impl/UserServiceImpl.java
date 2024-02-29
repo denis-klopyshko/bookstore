@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Objects;
+import java.util.Optional;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -53,23 +54,25 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto update(Long userId, UserRequestDto userRequestDto) {
-        var userEntity = MAPPER.mapToEntity(userRequestDto);
+        var currentUser = findUserEntity(userId);
 
-        if (!Objects.equals(userEntity.getAge(), userRequestDto.getAge())) {
-            userEntity.setAge(userRequestDto.getAge());
+        if (!Objects.equals(currentUser.getAge(), userRequestDto.getAge())) {
+            currentUser.setAge(userRequestDto.getAge());
         }
 
-        var requestedAddress = Address.builder()
-                .city(userRequestDto.getCity())
-                .region(userRequestDto.getRegion())
-                .country(userRequestDto.getCountry())
-                .build();
+        Optional.ofNullable(userRequestDto.getCity()).ifPresent(city -> {
+            currentUser.getAddress().setCity(city);
+        });
 
-        if (!Objects.equals(userEntity.getAddress(), requestedAddress)) {
-            userEntity.setAddress(requestedAddress);
-        }
+        Optional.ofNullable(userRequestDto.getCountry()).ifPresent(country -> {
+            currentUser.getAddress().setCountry(country);
+        });
 
-        return MAPPER.mapToDto(userRepo.save(userEntity));
+        Optional.ofNullable(userRequestDto.getRegion()).ifPresent(region -> {
+            currentUser.getAddress().setRegion(region);
+        });
+
+        return MAPPER.mapToDto(userRepo.save(currentUser));
     }
 
     @Override
