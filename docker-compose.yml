@@ -4,6 +4,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    env_file:
+      - .env
     ports:
       - "8181:8181"
     depends_on:
@@ -11,8 +13,7 @@ services:
         condition: service_healthy
     environment:
       - SERVER_PORT=8181
-      - DB_HOST=postgres
-      - DB_NAME=bookstore
+      - SPRING_PROFILES_ACTIVE=prod
     restart: on-failure
 
   postgres:
