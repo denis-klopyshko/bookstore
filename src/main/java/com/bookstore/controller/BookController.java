@@ -5,8 +5,11 @@ import com.bookstore.dto.book.BookDto;
 import com.bookstore.dto.book.BookRequestDto;
 import com.bookstore.dto.rating.BookRatingDto;
 import com.bookstore.service.BookService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -26,7 +29,7 @@ public class BookController {
     private final BookService bookService;
 
     @GetMapping
-    public Page<BookDto> findBooksPaged(BookFilter bookFilter, Pageable pageable) {
+    public Page<BookDto> findBooksPaged(@ParameterObject BookFilter bookFilter, @ParameterObject Pageable pageable) {
         return bookService.findAll(bookFilter, pageable);
     }
 
@@ -40,6 +43,7 @@ public class BookController {
         return bookService.findRatingsByBookIsbn(isbn, pageable);
     }
 
+    @Operation(security = @SecurityRequirement(name = "bearerAuth"))
     @PostMapping
     public ResponseEntity<BookDto> createBook(@Valid @RequestBody BookRequestDto bookRequest) {
         BookDto savedBook = bookService.create(bookRequest);
@@ -51,6 +55,7 @@ public class BookController {
         return ResponseEntity.created(location).body(savedBook);
     }
 
+    @Operation(security = @SecurityRequirement(name = "bearerAuth"))
     @PutMapping("/{isbn}")
     public BookDto updateBook(@PathVariable(name = "isbn") String isbn, @Valid @RequestBody BookRequestDto bookRequest) {
         if (!isbn.equals(bookRequest.getIsbn())) {
@@ -60,6 +65,7 @@ public class BookController {
         return bookService.update(isbn, bookRequest);
     }
 
+    @Operation(security = @SecurityRequirement(name = "bearerAuth"))
     @DeleteMapping("/{isbn}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteBook(@PathVariable(name = "isbn") String isbn) {

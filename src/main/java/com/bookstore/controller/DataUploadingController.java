@@ -2,6 +2,8 @@ package com.bookstore.controller;
 
 import com.bookstore.exception.FileFormatException;
 import com.bookstore.service.impl.FileDataUploadService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +23,7 @@ import java.util.Objects;
 public class DataUploadingController {
     private final FileDataUploadService service;
 
+    @Operation(security = @SecurityRequirement(name = "bearerAuth"))
     @PostMapping(path = "/csv/upload/{type}")
     public ResponseEntity<Object> loadData(@RequestParam(name = "file") MultipartFile file,
                                            @PathVariable(name = "type") String type) {
