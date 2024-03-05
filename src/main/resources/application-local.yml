@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/bookstore?reWriteBatchedInserts=true
+    username: postgres
+    password: 310892
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          audiences: https://dev-kugzqddea6xf2itb.us.auth0.com/api/v2/
+          issuer-uri: https://dev-kugzqddea6xf2itb.us.auth0.com/
+auth0:
+  token:
+    url: https://dev-kugzqddea6xf2itb.us.auth0.com/oauth/token
+  client:
+    id: BQbD6HsCyR7rLxGACqTAELsOeI012dvj
+    secret: FQxTzNVd_oPFdQ8vaBPotl7p-l2KDkWYiUvWToVroRM0kudQvANMpvJKyIturYyP
