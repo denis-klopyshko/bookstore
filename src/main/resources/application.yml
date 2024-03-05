@@ -41,6 +41,7 @@ server:
     contextPath: /api
   error:
     include-message: always
+    include-binding-errors: always
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
@@ -51,3 +52,9 @@ auth0:
   client:
     id: ${AUTH0_CLIENT_ID}
     secret: ${AUTH0_SECRET}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
