@@ -33,7 +33,11 @@ public class User {
 
     @Builder.Default
     @ToString.Exclude
-    @OneToMany(mappedBy = "user")
+    @OneToMany(
+            mappedBy = "user",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
     private Set<Rating> ratings = new HashSet<>();
 
     public void setAddress(Address address) {

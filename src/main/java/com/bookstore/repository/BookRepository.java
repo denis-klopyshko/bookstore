@@ -18,13 +18,13 @@ import java.util.Optional;
 
 @Repository
 public interface BookRepository extends JpaRepository<Book, Long>, JpaSpecificationExecutor<Book> {
-    @Query("SELECT ROUND(AVG(r.score), 2) FROM Rating r WHERE r.book = :book")
-    Optional<Double> calculateAverageRating(@Param("book") Book book);
+    @Query("SELECT ROUND(AVG(r.score), 2) FROM Rating r WHERE r.book = ?1")
+    Optional<Double> calculateAverageRating(Book book);
 
     Page<Book> findAll(Specification<Book> spec, Pageable pageable);
 
-    @Query("SELECT b from Book b join fetch b.author join fetch b.publisher where b.isbn = :isbn")
-    Optional<Book> findByIsbn(@Param("isbn") String isbn);
+    @Query("SELECT b from Book b join fetch b.author join fetch b.publisher where b.isbn = ?1")
+    Optional<Book> findByIsbn(String isbn);
 
     boolean existsByIsbn(String title);
 

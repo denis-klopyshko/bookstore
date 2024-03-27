@@ -6,12 +6,13 @@ import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.NaturalId;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
-@EqualsAndHashCode(of = {"isbn"})
+@EqualsAndHashCode(of = "isbn")
 @Getter
 @Setter
 @Builder
@@ -45,7 +46,9 @@ public class Book {
     @Builder.Default
     @ToString.Exclude
     @BatchSize(size = 50)
-    @OneToMany(mappedBy = "book", cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "book",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true)
     private Set<Rating> ratings = new HashSet<>();
 
     public void setAuthor(Author author) {
@@ -56,6 +59,27 @@ public class Book {
     public void setPublisher(Publisher publisher) {
         this.publisher = publisher;
         publisher.getBooks().add(this);
+    }
+
+    public void addRating(User user, int rating) {
+        Rating newRating = new Rating(user, this, rating);
+        ratings.add(newRating);
+        user.getRatings().add(newRating);
+    }
+
+    public void removeRating(User user) {
+        for (Iterator<Rating> iterator = ratings.iterator();
+             iterator.hasNext(); ) {
+            Rating rating = iterator.next();
+
+            if (rating.getBook().equals(this) &&
+                    rating.getUser().equals(user)) {
+                iterator.remove();
+                rating.getUser().getRatings().remove(rating);
+                rating.setBook(null);
+                rating.setUser(null);
+            }
+        }
     }
 
     public Book(String isbn, String title, Publisher publisher, Integer year) {
